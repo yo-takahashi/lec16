@@ -17,4 +17,9 @@ public class CallBack {
     return new TextMessage(text);
   }
 
+  public Stage fixStage(String text) {
+    return Stage.UNKNOWN;
+  }
+
+
 }
