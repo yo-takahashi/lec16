@@ -35,7 +35,7 @@ public class CallBackTest {
   }
 
 
-  @DisplayName("handleActionはリマインダー確認中に別メッセージがくれば、復帰する")
+  @DisplayName("handleActionはリマインダー確認中に別メッセージがくれば復帰する")
   @Test
   void handleAction03() {
     var set = new HashSet<UserIntent>();
