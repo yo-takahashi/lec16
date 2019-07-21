@@ -1,4 +1,4 @@
-package com.example.simplereminder;
+package com.example.simple_assistant;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package com.example.simplereminder;
+package com.example.simple_assistant;
 
 import lombok.AllArgsConstructor;
 

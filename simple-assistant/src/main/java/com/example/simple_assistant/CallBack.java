@@ -1,4 +1,4 @@
-package com.example.simplereminder;
+package com.example.simple_assistant;
 
 import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.event.MessageEvent;

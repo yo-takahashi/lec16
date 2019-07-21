@@ -1,13 +1,13 @@
-package com.example.simplereminder;
+package com.example.simple_assistant;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SimpleReminderApplication {
+public class SimpleAssistantApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(SimpleReminderApplication.class, args);
+    SpringApplication.run(SimpleAssistantApplication.class, args);
   }
 
 }
