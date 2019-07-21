@@ -1,5 +1,7 @@
-package com.example.simple_assistant;
+package com.example.simple_assistant.c;
 
+import com.example.simple_assistant.Intent;
+import com.example.simple_assistant.m.UserIntent;
 import com.linecorp.bot.model.message.TemplateMessage;
 import com.linecorp.bot.model.message.TextMessage;
 import com.linecorp.bot.model.message.template.ConfirmTemplate;
@@ -15,9 +17,9 @@ public class CallBackTest {
   @DisplayName("handleActionはIntentに反応しないメッセージに説明を返す")
   @Test
   void handleAction01() {
-    var sut = new CallBack(Collections.synchronizedSet(new HashSet<>()));
+    var mock = new CallBack(Collections.synchronizedSet(new HashSet<>()));
     var ui = new UserIntent("1234", Intent.UNKNOWN, "こんにちは");
-    var msg = (TextMessage) sut.handleAction(ui);
+    var msg = (TextMessage) mock.handleAction(ui);
     var actual = msg.getText();
     Assertions.assertEquals("リマインダを設定したい時間と要件を送信してください\n" +
       "例）10時20分に授業", actual);
@@ -26,9 +28,9 @@ public class CallBackTest {
   @DisplayName("handleActionはリマインダーインテントに確認メッセージを返す")
   @Test
   void handleAction02() {
-    var sut = new CallBack(Collections.synchronizedSet(new HashSet<>()));
+    var mock = new CallBack(Collections.synchronizedSet(new HashSet<>()));
     var ui = new UserIntent("1234", Intent.REMAINDER, "10時20分に授業");
-    var msg = (TemplateMessage) sut.handleAction(ui);
+    var msg = (TemplateMessage) mock.handleAction(ui);
     var template = (ConfirmTemplate) msg.getTemplate();
     var actual = template.getText();
     Assertions.assertEquals("10時20分に授業をリマインダーしますか？", actual);
@@ -38,9 +40,9 @@ public class CallBackTest {
   @DisplayName("handleActionはリマインダー確認中に別メッセージがくれば復帰する")
   @Test
   void handleAction03() {
-    var set = new HashSet<UserIntent>();
-    set.add(new UserIntent("1234", Intent.REMAINDER, "10時20分に授業"));
-    var sut = new CallBack(Collections.synchronizedSet(set));
+    var mock = new HashSet<UserIntent>();
+    mock.add(new UserIntent("1234", Intent.REMAINDER, "10時20分に授業"));
+    var sut = new CallBack(Collections.synchronizedSet(mock));
     var ui = new UserIntent("1234", Intent.UNKNOWN, "こんにちは");
     var msg = (TemplateMessage) sut.handleAction(ui);
     var template = (ConfirmTemplate) msg.getTemplate();

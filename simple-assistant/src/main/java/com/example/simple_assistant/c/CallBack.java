@@ -1,5 +1,6 @@
-package com.example.simple_assistant;
+package com.example.simple_assistant.c;
 
+import com.example.simple_assistant.m.UserIntent;
 import com.linecorp.bot.model.action.PostbackAction;
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.PostbackEvent;
