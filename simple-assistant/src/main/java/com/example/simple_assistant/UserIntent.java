@@ -1,6 +1,5 @@
 package com.example.simple_assistant;
 
-
 import com.linecorp.bot.model.event.MessageEvent;
 import com.linecorp.bot.model.event.PostbackEvent;
 import com.linecorp.bot.model.event.message.TextMessageContent;
@@ -9,6 +8,7 @@ import lombok.Value;
 
 import java.util.Objects;
 
+// あるユーザーの状態とメッセージを記録しておく
 @Value
 @AllArgsConstructor
 public class UserIntent {
