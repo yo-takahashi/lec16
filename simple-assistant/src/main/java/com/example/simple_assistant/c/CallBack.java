@@ -1,5 +1,6 @@
 package com.example.simple_assistant.c;
 
+import com.example.simple_assistant.Intent;
 import com.example.simple_assistant.m.ReminderItem;
 import com.example.simple_assistant.m.ReminderRepository;
 import com.example.simple_assistant.m.UserIntent;
@@ -17,10 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 @LineMessageHandler
@@ -86,6 +84,7 @@ public class CallBack {
       case "RY":
         try {
           var previous = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
+            .filter(ui -> Objects.equals(ui.getIntent(), Intent.REMINDER))
             .orElseThrow();
           var item = new ReminderItem(previous);
           repos.insert(item);
@@ -93,6 +92,9 @@ public class CallBack {
         } catch (DataAccessException e) {
           e.printStackTrace();
           msg = new TextMessage("データベースの登録に失敗しました");
+        } catch (NoSuchElementException e) {
+          e.printStackTrace();
+          msg = new TextMessage("期限切れのため、もう一度最初からやりなおしてください");
         }
         break;
       case "RN":

@@ -454,6 +454,7 @@ public class CallBack {
       case "RY":
         try {
           var previous = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
+            .filter(ui -> Objects.equals(ui.getIntent(), Intent.REMINDER))
             .orElseThrow();
           var item = new ReminderItem(previous);
           repos.insert(item);
@@ -461,6 +462,9 @@ public class CallBack {
         } catch (DataAccessException e) {
           e.printStackTrace();
           msg = new TextMessage("データベースの登録に失敗しました");
+        } catch (NoSuchElementException e) {
+          e.printStackTrace();
+          msg = new TextMessage("期限切れのため、もう一度最初からやりなおしてください");
         }
         break;
       case "RN":
