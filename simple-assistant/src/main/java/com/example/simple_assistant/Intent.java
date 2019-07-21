@@ -28,7 +28,7 @@ public enum Intent {
       .findFirst().orElse(UNKNOWN);
   }
 
-  // メッセージから時・分・秒を抜き出す
+  // メッセージから時・分・用件を抜き出す
   public List<String> getGroups(String text) {
     var matcher = pattern.matcher(text);
     if (!Objects.equals(this, UNKNOWN)) {

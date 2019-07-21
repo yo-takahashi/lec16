@@ -2,7 +2,7 @@
 
 [TOC]
 
-時間と用件を送信すると、指定した時間にリマインダーをpushしてくれるlinebotを作成する。
+実用的なシステムの例として、時間と用件を送信すると、その時間に用件をリマインダーとしてLineにpushしてくれるlinebotを作成する。
 
 わからない語句があった場合は、Web検索などで確認しておくとよい。
 
@@ -19,7 +19,7 @@ IntelliJ を起動し、展開された `simple-assistant` の pom.xml を選ぶ
 
 ### Intent enumを作成
 
-対話システムの場合、ユーザーのメッセージから何を要求しているのかの意図（これをインテントと呼ぶ）を見いだす必要がある。
+Chatbotやスマートスピーカーのような対話システムの場合、**ユーザーのメッセージから、ユーザが何を要求しているのかの意図**（これを**インテント**と呼ぶ）を見いだす必要がある。
 
 本来はこの部分も自然言語処理やAI技術を使うことで、より幅広い会話の中に適応したシステムが作れるが、今回は最も基本的な方法として、正規表現で判断をする。
 
@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
 public enum Intent {
 
   // メッセージの正規表現パターンに対応するやりとり状態の定義
-  REMINDER(Pattern.compile("^\\d{1,2}時\\d{1,2}分に.{1.32}$")),
+  REMINDER(Pattern.compile("^(\\d{1,2})時(\\d{1,2})分に(.{1,32})$")),
   UNKNOWN(Pattern.compile(".+"));
 
   private Pattern pattern;
@@ -57,11 +57,9 @@ public enum Intent {
 
 ### UserIntent クラスを作成
 
-chatbotは複数人で平行・同時に利用されることがあり得る。
+chatbotは複数人で平行・同時に利用されることがあり得るが、chatbot側のプログラムはひとつだけである。そのため、chatbot側はユーザーごとに「どんな意図の会話をしているか（つまり、インテント）」を分けて管理する必要がある。
 
-このため、ユーザーごとに「どんな意図の会話をしているか」を分けて管理する必要がある。
-
-ユーザーごとの会話の状態をインスタンスで管理するためのクラスとして、  `com.example.simple_assistant.m` パッケージに、UserIntent クラスを作成する。
+ユーザーごとのインテントの状態を管理するためのクラスとして、  `com.example.simple_assistant.m` パッケージに、UserIntent クラスを作成する。
 
 ```java
 package com.example.simple_assistant.m;
@@ -106,9 +104,9 @@ public class UserIntent {
 <div style="page-break-after: always"></div>
 ## インテントにあわせて返答する
 
-LineBotに投げかけられたメッセージから、 Intent が `UNKNOWN`, `REMINDER` のどちらかを判断し、返答メッセージを変えるChatbotが作れる。
+準備してきたクラスを組みあせる処理を作れば、LineBotがユーザーに投げかけられたメッセージから、 インテント が `UNKNOWN`, `REMINDER` のどちらかを判断し、返答を変えるChatbotが作れる。
 
-クラスのコードが長いので間違えないように。
+ `com.example.simple_assistant.c` パッケージに、このchatbotの主たる中身になる CallBack クラスを作成する（クラスのコードが長いので間違えないように）。
 
 import は先に作るのではなく、コード入力時にIntelliJに補完してもらうように進めた方が早く完成する。
 
@@ -231,11 +229,11 @@ public class CallBack {
 
 クラスが完成したら、一度ソースコードを読み、処理の流れを確認しなさい。
 
-また、LINE Developer のサイトから `Channel Secret`, `アクセストークン（ロングターム）` の値をもらい、 `application.properties` の項目を修正しなさい。
+また、LINE Developer のサイトから、先週までに作成したchatbotの `Channel Secret`, `アクセストークン（ロングターム）` の値をもらい、 `application.properties` ファイルの対応項目を修正しなさい。
 
-さらに ngrok で取得したURLを LINE Developer のサイトに登録し、アプリケーションを動作させ、動作確認を行いなさい。
+さらに ngrok で取得したURLを LINE Developer のサイトに登録し、アプリケーションを動作させ、自らのLINEから動作確認を行いなさい。
 
-（このあたりの動作のさせ方を忘れた学生は、前回の課題ファイルを参照）
+（このあたりの準備や動作を忘れた学生は、前回の課題ファイルを参照）
 
 下の画像のように会話を行い、動作を確認しなさい。<br>特に、handleIntent メソッドのswitch文では再帰処理を使い、リマインダーの確認状態の時に他の話題が投稿されても、確認を続けるように工夫している。
 
@@ -244,6 +242,239 @@ public class CallBack {
 <div style="page-break-after: always"></div>
 ## リマインダーをデータベースに保存する
 
+確認メッセージで〈はい〉が押された場合、時間と用件をデータベースに記録する。
+
+このプロジェクトはすでに `src/main/resources/schema.sql` でh2dbによるデータベースが作られている。
+
+<dL>
+<dt><strong>reminder_item テーブル</strong></dt>
+<dd>
+
+|  user_id | push_At | push_text |
+|:----:|:----:|:----:|
+|||
+
+</dd>
+<dd>user_id は varchar(64) 型である。</dd>
+<dd>push_At は time 型（時分秒を表す）である。</dd>
+<dd>push_text はvarchar(32) 型である。</dd>
+<dd>3列の組み合わせは一意である。</dd>
+</dl>
+
+このテーブルに、`xx時xx分にxx` という文章から得られる変数データ（xxの部分）を記録し、後から使えるようにする。
 
 
-Import
+### Intent enumを修正
+
+Intent enumに、メッセージから時・分を抜き出すメソッドを作成する。
+
+```java
+package com.example.simple_assistant;
+
+import lombok.AllArgsConstructor;
+
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+// ユーザーとのやりとり状態を定義するenum
+@AllArgsConstructor
+public enum Intent {
+
+  /*----　ソースコード上で変更がない部分は、省略している ----*/
+
+  // メッセージから時・分・用件を抜き出す
+  public List<String> getGroups(String text) {
+    var matcher = pattern.matcher(text);
+    if (!Objects.equals(this, UNKNOWN)) {
+      int n = matcher.groupCount();
+      if (matcher.matches()) {
+        return IntStream.rangeClosed(1, n)
+          .mapToObj(matcher::group)
+          .collect(Collectors.toUnmodifiableList());
+      }
+    }
+    return Collections.emptyList();
+  }
+
+}
+```
+
+このメソッドで、`xx時xx分にxx` という文章から、時・分・用件が文字列のListの形で、
+
+|  List |
+|:----:|
+|10|
+|02|
+|食事|
+
+
+のように抜き出される。
+
+この情報をデータベースに格納するために、ReminderItem クラスを作る。
+
+### ReminderItem クラスを作成
+
+テーブルに登録した情報を後から使えるようにするためには、 時・分・用件 だけでなく、 誰が発言したかのユーザIdも必要である。
+
+これをまとめて管理する RemainderItem クラスを  `com.example.simple_assistant.m` パッケージに作る。
+
+引数付きコンストラクタを作り、UserIntentからUserIdと上記のList を生成し、インスタンス化できるようにしておく。
+
+```java
+package com.example.simple_assistant.m;
+
+import com.example.simple_assistant.Intent;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+import java.time.LocalTime;
+import java.util.Objects;
+
+// あるメッセージから作られたリマインダー1つ分
+@AllArgsConstructor
+@Data
+public class ReminderItem {
+
+  private String userId;
+  private LocalTime pushAt;
+  private String pushText;
+
+  public ReminderItem(UserIntent userIntent) {
+    try {
+      if (!Objects.equals(userIntent.getIntent(), Intent.REMINDER)) {
+        throw new IllegalArgumentException("IntentTypeが異なります:" + userIntent.getIntent().name());
+      }
+      this.userId = userIntent.getUserId();
+      var text = userIntent.getText();
+      
+      // Intentに追加したgetGroupsメソッドを呼び出す部分
+      var groups = userIntent.getIntent().getGroups(text);
+      
+      // groups のListに格納された時間・分・用件をフィールドに格納する
+      int hour = Integer.valueOf(groups.get(0));
+      int time = Integer.valueOf(groups.get(1));
+      this.pushAt = LocalTime.of(hour, time);
+      this.pushText = groups.get(2);
+    } catch (IllegalArgumentException e) {
+      e.printStackTrace();
+    }
+  }
+}
+```
+
+### ReminderRepository クラスを作成
+
+ReminderItem インスタンスを使って、実際にテーブルにデータを書き込む ReminderRepository クラスを `com.example.simple_assistant.m` パッケージに作成する。
+
+```java
+package com.example.simple_assistant.m;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public class ReminderRepository {
+
+  private JdbcTemplate jdbc;
+
+  @Autowired
+  public ReminderRepository(JdbcTemplate jdbc) {
+    this.jdbc = jdbc;
+  }
+
+  public int insert(ReminderItem reminderItem) {
+    var sql = "insert into reminder_item (user_id, push_at, push_text) values (?, ?, ?)";
+    return jdbc.update(sql, reminderItem.getUserId(), reminderItem.getPushAt(), reminderItem.getPushText());
+  }
+
+}
+```
+
+### CallBack クラスを変更
+
+準備したクラスをCallBackクラスに組み込んで、確認メッセージに〈はい〉と答えたときに、データベースにそのユーザーにリマインダーを送る時間と用件を記録できるChatBotにバージョンアップする。
+
+変更する箇所が多いので、間違わないように。
+
+```java
+package com.example.simple_assistant.c;
+
+import com.example.simple_assistant.m.ReminderItem;
+import com.example.simple_assistant.m.ReminderRepository;
+import com.example.simple_assistant.m.UserIntent;
+import com.linecorp.bot.model.action.PostbackAction;
+import com.linecorp.bot.model.event.MessageEvent;
+import com.linecorp.bot.model.event.PostbackEvent;
+import com.linecorp.bot.model.event.message.TextMessageContent;
+import com.linecorp.bot.model.message.Message;
+import com.linecorp.bot.model.message.TemplateMessage;
+import com.linecorp.bot.model.message.TextMessage;
+import com.linecorp.bot.model.message.template.ConfirmTemplate;
+import com.linecorp.bot.spring.boot.annotation.EventMapping;
+import com.linecorp.bot.spring.boot.annotation.LineMessageHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.dao.DataAccessException;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
+
+@LineMessageHandler
+public class CallBack {
+
+  // ユーザごとの処理状態を記録する
+  private Set<UserIntent> userIntents;
+
+  // データベースにアクセスするためのクラス　←追加
+  private ReminderRepository repos;
+
+　// ↓コンストラクタにも引数を追加
+  @Autowired
+  public CallBack(Set<UserIntent> userIntents, ReminderRepository repos) {
+    this.userIntents = userIntents;
+    this.repos = repos;
+  }
+
+  /* ---- handleProc メソッドまでは変更なし ---- */
+  
+  // 確認画面で返すメッセージおよび処理のハンドリングをする
+  // 細かい変更が入っているので、注意して直すこと。
+  Message handleProc(UserIntent userIntent) {
+    TextMessage msg = new TextMessage("中断しました");
+    switch (userIntent.getText()) {
+      case "RY":
+        try {
+          var previous = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
+            .orElseThrow();
+          var item = new ReminderItem(previous);
+          repos.insert(item);
+          msg = new TextMessage("リマインダーを登録しました");
+        } catch (DataAccessException e) {
+          e.printStackTrace();
+          msg = new TextMessage("データベースの登録に失敗しました");
+        }
+        break;
+      case "RN":
+      default:
+    }
+    return msg;
+  }
+
+  /* ---- handleProc メソッドより下は変更なし ---- */
+
+}
+
+```
+
+LineBotを起動し、動作確認を行う。
+
+実際にデータが追加されているか確認したい場合は、IntelliJのデータベースウィンドウに `jdbc:h2:~/h2db/SimpleAssistant;MODE=PostgreSQL;AUTO_SERVER=TRUE;` (ユーザー名・パスワードは両方とも `sa` ）でh2データベースを登録して，テーブルの中身を実際に確認しても良い。

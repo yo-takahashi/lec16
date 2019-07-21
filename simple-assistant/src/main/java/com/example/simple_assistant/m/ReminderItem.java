@@ -23,7 +23,11 @@ public class ReminderItem {
       }
       this.userId = userIntent.getUserId();
       var text = userIntent.getText();
+
+      // Intentに追加したgetGroupsメソッドを呼び出す部分
       var groups = userIntent.getIntent().getGroups(text);
+
+      // groups のListに格納された時間・分・用件をフィールドに格納する
       int hour = Integer.valueOf(groups.get(0));
       int time = Integer.valueOf(groups.get(1));
       this.pushAt = LocalTime.of(hour, time);
