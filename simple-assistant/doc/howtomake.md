@@ -15,7 +15,6 @@ IntelliJ を起動し、展開された `simple-assistant` の pom.xml を選ぶ
 このプロジェクトには、前回利用した line-bot-sdk と、5月頃の授業で学んだデータベース（H2Database）が利用できるように事前セッティングしている。
 
 <div style="page-break-after: always"></div>
-
 ## インテント（要求意図）を定義する
 
 ### Intent enumを作成
@@ -105,14 +104,13 @@ public class UserIntent {
 ```
 
 <div style="page-break-after: always"></div>
-
 ## インテントにあわせて返答する
 
 LineBotに投げかけられたメッセージから、 Intent が `UNKNOWN`, `REMINDER` のどちらかを判断し、返答メッセージを変えるChatbotが作れる。
 
 クラスのコードが長いので間違えないように。
 
-import は先に作るのではなく、コード入力時にIntelliJに補完してもらうように進めた方が圧倒的に早く完成する。
+import は先に作るのではなく、コード入力時にIntelliJに補完してもらうように進めた方が早く完成する。
 
 ```java
 package com.example.simple_assistant.c;
@@ -158,7 +156,7 @@ public class CallBack {
   @EventMapping
   public Message handleMessage(MessageEvent<TextMessageContent> event) {
     var userIntent = new UserIntent(event);
-    return handleAction(userIntent);
+    return handleIntent(userIntent);
   }
 
   // PostBackEventに対応する
@@ -172,7 +170,7 @@ public class CallBack {
 
   // 返すメッセージのハンドリングをする
   // リマインダー登録処理の途中で不正な入力があれば、再帰的に状態を復帰する
-  Message handleAction(UserIntent userIntent) {
+  Message handleIntent(UserIntent userIntent) {
     Message msg = getUnknownReaMsg();
     var intent = userIntent.getIntent();
     switch (intent) {
@@ -183,7 +181,7 @@ public class CallBack {
       case UNKNOWN:
       default:
         msg = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
-          .map(this::handleAction)
+          .map(this::handleIntent)
           .orElse(msg);
     }
     return msg;
@@ -239,7 +237,13 @@ public class CallBack {
 
 （このあたりの動作のさせ方を忘れた学生は、前回の課題ファイルを参照）
 
-下の画像のように会話を行い、動作を確認しなさい。<br>特に、handleAction メソッドのswitch文では再帰処理を使い、リマインダーの確認状態の時に他の話題が投稿されても、確認を続けるように工夫している。
+下の画像のように会話を行い、動作を確認しなさい。<br>特に、handleIntent メソッドのswitch文では再帰処理を使い、リマインダーの確認状態の時に他の話題が投稿されても、確認を続けるように工夫している。
 
 ![fig01](./fig01.png)
 
+<div style="page-break-after: always"></div>
+## リマインダーをデータベースに保存する
+
+
+
+Import

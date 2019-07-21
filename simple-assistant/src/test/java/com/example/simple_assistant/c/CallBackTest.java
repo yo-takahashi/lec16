@@ -17,9 +17,9 @@ public class CallBackTest {
   @DisplayName("handleActionはIntentに反応しないメッセージに説明を返す")
   @Test
   void handleAction01() {
-    var mock = new CallBack(Collections.synchronizedSet(new HashSet<>()));
+    var mock = new CallBack(Collections.synchronizedSet(new HashSet<>()), null);
     var ui = new UserIntent("1234", Intent.UNKNOWN, "こんにちは");
-    var msg = (TextMessage) mock.handleAction(ui);
+    var msg = (TextMessage) mock.handleIntent(ui);
     var actual = msg.getText();
     Assertions.assertEquals("リマインダを設定したい時分と用件（32文字まで）を送信してください\n" +
       "例）10時20分に授業", actual);
@@ -28,9 +28,9 @@ public class CallBackTest {
   @DisplayName("handleActionはリマインダーインテントに確認メッセージを返す")
   @Test
   void handleAction02() {
-    var mock = new CallBack(Collections.synchronizedSet(new HashSet<>()));
+    var mock = new CallBack(Collections.synchronizedSet(new HashSet<>()), null);
     var ui = new UserIntent("1234", Intent.REMINDER, "10時20分に授業");
-    var msg = (TemplateMessage) mock.handleAction(ui);
+    var msg = (TemplateMessage) mock.handleIntent(ui);
     var template = (ConfirmTemplate) msg.getTemplate();
     var actual = template.getText();
     Assertions.assertEquals("10時20分に授業をリマインダーしますか？", actual);
@@ -42,9 +42,9 @@ public class CallBackTest {
   void handleAction03() {
     var mock = new HashSet<UserIntent>();
     mock.add(new UserIntent("1234", Intent.REMINDER, "10時20分に授業"));
-    var sut = new CallBack(Collections.synchronizedSet(mock));
+    var sut = new CallBack(Collections.synchronizedSet(mock), null);
     var ui = new UserIntent("1234", Intent.UNKNOWN, "こんにちは");
-    var msg = (TemplateMessage) sut.handleAction(ui);
+    var msg = (TemplateMessage) sut.handleIntent(ui);
     var template = (ConfirmTemplate) msg.getTemplate();
     var actual = template.getText();
     Assertions.assertEquals("10時20分に授業をリマインダーしますか？", actual);
