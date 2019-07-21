@@ -21,7 +21,7 @@ public class CallBackTest {
     var ui = new UserIntent("1234", Intent.UNKNOWN, "こんにちは");
     var msg = (TextMessage) mock.handleAction(ui);
     var actual = msg.getText();
-    Assertions.assertEquals("リマインダを設定したい時間と用件を送信してください\n" +
+    Assertions.assertEquals("リマインダを設定したい時分と用件（32文字まで）を送信してください\n" +
       "例）10時20分に授業", actual);
   }
 

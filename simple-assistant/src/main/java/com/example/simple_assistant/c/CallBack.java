@@ -87,7 +87,7 @@ public class CallBack {
 
   // TextEventで、指示不明の場合の返答メッセージを作る
   Message getUnknownReaMsg() {
-    return new TextMessage("リマインダを設定したい時間と用件を送信してください\n例）10時20分に授業");
+    return new TextMessage("リマインダを設定したい時分と用件（32文字まで）を送信してください\n例）10時20分に授業");
   }
 
   // TextEventで、リマインダーの場合の返答メッセージを作る
