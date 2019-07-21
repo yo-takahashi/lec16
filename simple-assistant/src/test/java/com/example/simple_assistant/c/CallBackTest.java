@@ -29,7 +29,7 @@ public class CallBackTest {
   @Test
   void handleAction02() {
     var mock = new CallBack(Collections.synchronizedSet(new HashSet<>()));
-    var ui = new UserIntent("1234", Intent.REMAINDER, "10時20分に授業");
+    var ui = new UserIntent("1234", Intent.REMINDER, "10時20分に授業");
     var msg = (TemplateMessage) mock.handleAction(ui);
     var template = (ConfirmTemplate) msg.getTemplate();
     var actual = template.getText();
@@ -41,7 +41,7 @@ public class CallBackTest {
   @Test
   void handleAction03() {
     var mock = new HashSet<UserIntent>();
-    mock.add(new UserIntent("1234", Intent.REMAINDER, "10時20分に授業"));
+    mock.add(new UserIntent("1234", Intent.REMINDER, "10時20分に授業"));
     var sut = new CallBack(Collections.synchronizedSet(mock));
     var ui = new UserIntent("1234", Intent.UNKNOWN, "こんにちは");
     var msg = (TemplateMessage) sut.handleAction(ui);

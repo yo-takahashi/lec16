@@ -59,7 +59,7 @@ public class CallBack {
     Message msg = getUnknownReaMsg();
     var intent = userIntent.getIntent();
     switch (intent) {
-      case REMAINDER:
+      case REMINDER:
         upsertUserIntent(userIntent);
         msg = getRemainderConfirmMsg(userIntent.getText());
         break;

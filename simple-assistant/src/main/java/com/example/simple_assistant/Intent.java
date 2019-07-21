@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 public enum Intent {
 
   // メッセージの正規表現パターンに対応するやりとり状態の定義
-  REMAINDER(Pattern.compile("^\\d{1,2}時\\d{1,2}分に.+$")),
+  REMINDER(Pattern.compile("^\\d{1,2}時\\d{1,2}分に.+$")),
   UNKNOWN(Pattern.compile(".+"));
 
   private Pattern pattern;

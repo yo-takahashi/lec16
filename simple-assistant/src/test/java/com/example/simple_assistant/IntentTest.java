@@ -18,7 +18,7 @@ public class IntentTest {
   @Test
   void makeIntentReturnsREMINDER() {
     var actual = Intent.makeIntent("10時20分に授業");
-    assertEquals(Intent.REMAINDER, actual);
+    assertEquals(Intent.REMINDER, actual);
   }
 
   @DisplayName("Intentが〈10時20分に〉授業でREMAINDERを返す")
