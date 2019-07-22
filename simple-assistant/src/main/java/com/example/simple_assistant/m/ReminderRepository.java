@@ -36,10 +36,9 @@ public class ReminderRepository {
 
   public int delete(LocalTime time) {
     var sql = "delete from reminder_item " +
-      "where push_at < ?";
+      "where push_at <= ?";
 
     return jdbc.update(sql, time);
   }
-
 
 }
