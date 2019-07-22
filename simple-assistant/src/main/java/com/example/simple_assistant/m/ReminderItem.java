@@ -16,6 +16,10 @@ public class ReminderItem {
   private LocalTime pushAt;
   private String pushText;
 
+  public ReminderItem() {
+    this("", LocalTime.MIN, "");
+  }
+
   public ReminderItem(UserIntent userIntent) {
     try {
       if (!Objects.equals(userIntent.getIntent(), Intent.REMINDER)) {
