@@ -19,7 +19,8 @@ public class ReminderItem {
   public ReminderItem(UserIntent userIntent) {
     try {
       if (!Objects.equals(userIntent.getIntent(), Intent.REMINDER)) {
-        throw new IllegalArgumentException("IntentTypeが異なります:" + userIntent.getIntent().name());
+        throw new IllegalArgumentException("IntentTypeが異なります:"
+          + userIntent.getIntent().name());
       }
       this.userId = userIntent.getUserId();
       var text = userIntent.getText();

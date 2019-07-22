@@ -15,8 +15,11 @@ public class ReminderRepository {
   }
 
   public int insert(ReminderItem reminderItem) {
-    var sql = "insert into reminder_item (user_id, push_at, push_text) values (?, ?, ?)";
-    return jdbc.update(sql, reminderItem.getUserId(), reminderItem.getPushAt(), reminderItem.getPushText());
+    var sql = "insert into " +
+      "reminder_item (user_id, push_at, push_text) " +
+      "values (?, ?, ?)";
+    return jdbc.update(sql,
+      reminderItem.getUserId(), reminderItem.getPushAt(), reminderItem.getPushText());
   }
 
 }
