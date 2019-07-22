@@ -492,3 +492,107 @@ LineBotを起動し、動作確認を行う。
 実際にデータが追加されているか確認したい場合は、IntelliJのデータベースウィンドウに `jdbc:h2:~/h2db/SimpleAssistant;MODE=PostgreSQL;AUTO_SERVER=TRUE;` (ユーザー名・パスワードは両方とも `sa` ）でh2データベースを登録して，テーブルの中身を実際に確認しても良い。
 
 <div style="page-break-after: always"></div>
+
+## リマインダを送る
+
+データベースのテーブルに記録されたリマインダの情報を元に、ユーザーごとにメッセージをpush通知する。
+
+そのためにはまず、データベースに記録されたリマインダの情報を検索できる必要がある。また、リマインダが不要となったものはゴミデータとして削除する必要がある。
+
+このため、 ReminderRepository クラスに、select, delete メソッドを追加する。
+
+
+```java
+package com.example.simple_assistant.m;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalTime;
+import java.util.List;
+
+@Repository
+public class ReminderRepository {
+
+  private JdbcTemplate jdbc;
+
+  @Autowired
+  public ReminderRepository(JdbcTemplate jdbc) {
+    this.jdbc = jdbc;
+  }
+
+  public int insert(ReminderItem reminderItem) {
+    var sql = "insert into " +
+      "reminder_item (user_id, push_at, push_text) " +
+      "values (?, ?, ?)";
+    return jdbc.update(sql,
+      reminderItem.getUserId(), reminderItem.getPushAt(), reminderItem.getPushText());
+  }
+
+  public List<ReminderItem> select(LocalTime time) {
+    var sql = "select * from reminder_item " +
+      "where push_at = ?";
+
+    var items = jdbc.query(sql, new BeanPropertyRowMapper<>(ReminderItem.class), time);
+    return items;
+  }
+}
+
+```
+
+
+`com.example.simple_assistant.c` パッケージに、Push クラスを作成する。
+
+```java
+package com.example.simple_assistant.c;
+
+import com.example.simple_assistant.m.ReminderRepository;
+import com.linecorp.bot.client.LineMessagingClient;
+import com.linecorp.bot.model.PushMessage;
+import com.linecorp.bot.model.message.TextMessage;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ExecutionException;
+
+@Slf4j
+@Component
+public class Push {
+
+  private LineMessagingClient client;
+  private ReminderRepository repository;
+
+  @Autowired
+  public Push(LineMessagingClient client, ReminderRepository repository) {
+    this.client = client;
+    this.repository = repository;
+  }
+
+  @Scheduled(cron = "0 */1 * * * *", zone = "Asia/Tokyo")
+  public void pushTimeTone() {
+    log.info("try push...");
+    var time = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
+    var remainderItems = repository.select(time);
+    remainderItems.stream()
+      .map(ri -> new PushMessage(ri.getUserId(), new TextMessage(ri.getPushText())))
+      .forEach(this::push);
+  }
+
+  private void push(PushMessage pMsg) {
+    try {
+      var resp = client.pushMessage(pMsg).get();
+      log.info("Sent messages: {}", resp);
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+  }
+}
+```
+

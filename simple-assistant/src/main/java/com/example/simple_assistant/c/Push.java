@@ -32,8 +32,9 @@ public class Push {
     var time = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
     var remainderItems = repository.select(time);
     remainderItems.stream()
-      .map(ri -> new PushMessage(ri.getUserId(), new TextMessage(ri.getPushText())))
+      .map(ri -> new PushMessage(ri.getUserId(), new TextMessage(ri.getPushText() + "の時間です！")))
       .forEach(this::push);
+    repository.delete(time);
   }
 
   private void push(PushMessage pMsg) {

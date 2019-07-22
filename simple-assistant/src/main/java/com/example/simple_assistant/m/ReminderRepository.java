@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -27,7 +26,6 @@ public class ReminderRepository {
       reminderItem.getUserId(), reminderItem.getPushAt(), reminderItem.getPushText());
   }
 
-  @Transactional
   public List<ReminderItem> select(LocalTime time) {
     var sql = "select * from reminder_item " +
       "where push_at = ?";
@@ -35,4 +33,13 @@ public class ReminderRepository {
     var items = jdbc.query(sql, new BeanPropertyRowMapper<>(ReminderItem.class), time);
     return items;
   }
+
+  public int delete(LocalTime time) {
+    var sql = "delete from reminder_item " +
+      "where push_at < ?";
+
+    return jdbc.update(sql, time);
+  }
+
+
 }
