@@ -161,13 +161,10 @@ public class CallBack {
   @EventMapping
   public Message handlePostBack(PostbackEvent event) {
     var userIntent = new UserIntent(event);
-    var msg = getPostBackMsg(userIntent.getText());
-    upsertUserIntent(userIntent);
-    return msg;
+    return handleProc(userIntent);
   }
 
   // 返すメッセージのハンドリングをする
-  // リマインダー登録処理の途中で不正な入力があれば、再帰的に状態を復帰する
   Message handleIntent(UserIntent userIntent) {
     Message msg = getUnknownReaMsg();
     var intent = userIntent.getIntent();
@@ -178,23 +175,40 @@ public class CallBack {
         break;
       case UNKNOWN:
       default:
-        msg = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
+        // 確認画面(REMINDER)の段階で想定外な通常呼び出し(UNKNOWN)があれば、再帰的に再確認する
+        msg = getUserIntent(userIntent.getUserId(), Intent.REMINDER)
           .map(this::handleIntent)
           .orElse(msg);
     }
     return msg;
   }
-
-  // userIntentsフィールドに、指定された条件のものがあれば取り出す
-  Optional<UserIntent> getUserIntentIf(Predicate<UserIntent> filter) {
-    return userIntents.stream()
-      .filter(filter)
-      .findFirst();
+  
+  // 確認画面で返すメッセージおよびデータベース記録処理のハンドリングをする
+  Message handleProc(UserIntent userIntent) {
+    TextMessage msg = new TextMessage("中断しました");
+    switch (userIntent.getText()) {
+      case "RY":
+        msg = new TextMessage("リマインダーを登録しました");
+        break;
+      case "RN":
+      default:
+        break;
+    }
+    upsertUserIntent(userIntent);
+    return msg;
   }
 
-  // userIntentsフィールドを、新しいものに置き換える
+  // userIntentsフィールドに、指定された条件のものがあれば取り出す
+  Optional<UserIntent> getUserIntent(String userId, Intent intent) {
+    return userIntents.stream()
+      .filter(ui -> ui.contains(userId))
+      .filter(ui -> ui.contains(intent))
+      .findFirst();
+  }
+  
+  // userIntentsフィールドを、引数のものに置き換える
   void upsertUserIntent(UserIntent newOne) {
-    userIntents.removeIf(ui -> ui.containsUserId(newOne.getUserId()));
+    userIntents.removeIf(ui -> ui.contains(newOne.getUserId()));
     userIntents.add(newOne);
   }
 
@@ -209,19 +223,6 @@ public class CallBack {
       new PostbackAction("はい", "RY"),
       new PostbackAction("いいえ", "RN"));
     return new TemplateMessage(text, template);
-  }
-
-  // PostBackEventに対するメッセージを作る
-  Message getPostBackMsg(String actionData) {
-    TextMessage msg = new TextMessage("中断しました");
-    switch (actionData) {
-      case "RY":
-        msg = new TextMessage("リマインダーを登録しました");
-        break;
-      case "RN":
-      default:
-    }
-    return msg;
   }
 
 }
@@ -259,14 +260,17 @@ public class CallBack {
 <dd>push_At は time 型（時分秒を表す）である。</dd>
 <dd>push_text はvarchar(32) 型である。</dd>
 <dd>3列の組み合わせは一意である。</dd>
+<dd>初期データはない。</dd>
 </dl>
 
 このテーブルに、`xx時xx分にxx` という文章から得られる変数データ（xxの部分）を記録し、後から使えるようにする。
 
+この変数データの部分を、対話システムでは **エンティティ** と呼ぶ。ただし、システム開発ではエンティティという言葉が違う意味でよく使われる（タプルのマッピングデータ、概念データモデルでのデータの枠組み、etc...）ので、ここではあえて〈**変数データ**〉と呼ぶ。
+
 
 ### Intent enumを修正
 
-Intent enumに、メッセージから時・分を抜き出すメソッドを作成する。
+Intent enumに、メッセージから変数データ（時・分・用件）を抜き出すメソッドを作成する。
 
 ```java
 package com.example.simple_assistant;
@@ -304,7 +308,7 @@ public enum Intent {
 }
 ```
 
-このメソッドで、`xx時xx分にxx` という文章から、時・分・用件が文字列のListの形で、
+このメソッドで、`xx時xx分にxx` という文章から、変数データがString型のListの形で、
 
 |  List |
 |:----:|
@@ -313,15 +317,15 @@ public enum Intent {
 |食事|
 
 
-のように抜き出される。
+のように抜き出されている。
 
 この情報をデータベースに格納するために、ReminderItem クラスを作る。
 
 ### ReminderItem クラスを作成
 
-テーブルに登録した情報を後から使えるようにするためには、 時・分・用件 だけでなく、 誰が発言したかのユーザIdも必要である。
+テーブルに登録した情報を後から使えるようにするためには、 時・分・用件 だけでなく、 誰のリマインダかを区別するユーザIdも必要である。
 
-これをまとめて管理する RemainderItem クラスを  `com.example.simple_assistant.m` パッケージに作る。
+これらをまとめて管理する RemainderItem クラスを  `com.example.simple_assistant.m` パッケージに作る。
 
 引数付きコンストラクタを作り、UserIntentからUserIdと上記のList を生成し、インスタンス化できるようにしておく。
 
@@ -355,7 +359,8 @@ public class ReminderItem {
       // Intentに追加したgetGroupsメソッドを呼び出す部分
       var groups = userIntent.getIntent().getGroups(text);
       
-      // groups のListに格納された時間・分・用件をフィールドに格納する
+      // groups（変数データ）のListに格納された時間・分・用件を、
+      // ReminderItem インスタンスのフィールドに格納する
       int hour = Integer.valueOf(groups.get(0));
       int time = Integer.valueOf(groups.get(1));
       this.pushAt = LocalTime.of(hour, time);
@@ -446,15 +451,14 @@ public class CallBack {
 
   /* ---- handleProc メソッドまでは変更なし ---- */
   
-  // 確認画面で返すメッセージおよび処理のハンドリングをする
-  // 細かい変更が入っているので、注意して直すこと。
+  // 確認画面で返すメッセージおよびデータベース記録処理のハンドリングをする
   Message handleProc(UserIntent userIntent) {
     TextMessage msg = new TextMessage("中断しました");
     switch (userIntent.getText()) {
       case "RY":
         try {
-          var previous = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
-            .filter(ui -> Objects.equals(ui.getIntent(), Intent.REMINDER))
+          // リマインダ情報が入った(REMINDER)のUserIntentを取り出す
+          var previous = getUserIntent(userIntent.getUserId(), Intent.REMINDER)
             .orElseThrow();
           var item = new ReminderItem(previous);
           repos.insert(item);
@@ -469,10 +473,11 @@ public class CallBack {
         break;
       case "RN":
       default:
+        break;
     }
+    upsertUserIntent(userIntent);
     return msg;
   }
-
   /* ---- handleProc メソッドより下は変更なし ---- */
 
 }
@@ -482,3 +487,5 @@ public class CallBack {
 LineBotを起動し、動作確認を行う。
 
 実際にデータが追加されているか確認したい場合は、IntelliJのデータベースウィンドウに `jdbc:h2:~/h2db/SimpleAssistant;MODE=PostgreSQL;AUTO_SERVER=TRUE;` (ユーザー名・パスワードは両方とも `sa` ）でh2データベースを登録して，テーブルの中身を実際に確認しても良い。
+
+<div style="page-break-after: always"></div>

@@ -32,7 +32,7 @@ public class IntentTest {
     assertEquals(Intent.UNKNOWN, actual);
   }
 
-  @DisplayName("Intentは用件が32文字以上でえあればUNKNOWNを返す")
+  @DisplayName("Intentは用件が32文字以上であればUNKNOWNを返す")
   @Test
   void makeIntentReturnsUNKNOWN03() {
     var actual = Intent.makeIntent("10時20分に1234567890123456789012345678901234567890");

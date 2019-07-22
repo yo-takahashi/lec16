@@ -19,7 +19,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.dao.DataAccessException;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 @LineMessageHandler
 public class CallBack {
@@ -53,13 +52,10 @@ public class CallBack {
   @EventMapping
   public Message handlePostBack(PostbackEvent event) {
     var userIntent = new UserIntent(event);
-    var msg = handleProc(userIntent);
-    upsertUserIntent(userIntent);
-    return msg;
+    return handleProc(userIntent);
   }
 
   // 通常状態で返すメッセージのハンドリングをする
-  // リマインダー登録処理の途中で不正な入力があれば、再帰的に状態を復帰する
   Message handleIntent(UserIntent userIntent) {
     Message msg = getUnknownReaMsg();
     var intent = userIntent.getIntent();
@@ -70,21 +66,22 @@ public class CallBack {
         break;
       case UNKNOWN:
       default:
-        msg = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
+        // 確認画面(REMINDER)の段階で想定外な通常呼び出し(UNKNOWN)があれば、再帰的に再確認する
+        msg = getUserIntent(userIntent.getUserId(), Intent.REMINDER)
           .map(this::handleIntent)
           .orElse(msg);
     }
     return msg;
   }
 
-  // 確認画面で返すメッセージおよび処理のハンドリングをする
+  // 確認画面で返すメッセージおよびデータベース記録処理のハンドリングをする
   Message handleProc(UserIntent userIntent) {
     TextMessage msg = new TextMessage("中断しました");
     switch (userIntent.getText()) {
       case "RY":
         try {
-          var previous = getUserIntentIf(ui -> ui.containsUserId(userIntent.getUserId()))
-            .filter(ui -> Objects.equals(ui.getIntent(), Intent.REMINDER))
+          // リマインダ情報が入った(REMINDER)のUserIntentを取り出す
+          var previous = getUserIntent(userIntent.getUserId(), Intent.REMINDER)
             .orElseThrow();
           var item = new ReminderItem(previous);
           repos.insert(item);
@@ -99,20 +96,23 @@ public class CallBack {
         break;
       case "RN":
       default:
+        break;
     }
+    upsertUserIntent(userIntent);
     return msg;
   }
 
   // userIntentsフィールドに、指定された条件のものがあれば取り出す
-  Optional<UserIntent> getUserIntentIf(Predicate<UserIntent> filter) {
+  Optional<UserIntent> getUserIntent(String userId, Intent intent) {
     return userIntents.stream()
-      .filter(filter)
+      .filter(ui -> ui.contains(userId))
+      .filter(ui -> ui.contains(intent))
       .findFirst();
   }
 
-  // userIntentsフィールドを、新しいものに置き換える
+  // userIntentsフィールドを、引数のものに置き換える
   void upsertUserIntent(UserIntent newOne) {
-    userIntents.removeIf(ui -> ui.containsUserId(newOne.getUserId()));
+    userIntents.removeIf(ui -> ui.contains(newOne.getUserId()));
     userIntents.add(newOne);
   }
 

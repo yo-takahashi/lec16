@@ -30,8 +30,12 @@ public class UserIntent {
     this.intent = Intent.makeIntent(text);
   }
 
-  public boolean containsUserId(String userId) {
+  public boolean contains(String userId) {
     return Objects.equals(this.userId, userId);
+  }
+
+  public boolean contains(Intent intent) {
+    return Objects.equals(this.intent, intent);
   }
 
 }
