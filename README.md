@@ -1,17 +1,8 @@
 # 課題
 
 
-実用的なシステムの例として、時間と用件を送信すると、その時間に用件をリマインダーとしてLineにpushしてくれるlinebotを作成する。
+先週と先々週作ったLinebotにAIを接続する。今回は青空文庫の単語をDoc2Vecで学習したモデルをAPIで呼び出す。何か単語を送るとその単語ベクトルに近い小説タイトルを10作返してくれる。
 
-わからない語句があった場合は、Web検索などで確認しておくとよい。
-
-## 前準備
-
-先週作った`simple-assistant` に以下のファイルを追加する。(Callback.classをに追加する)
-
-<!-- これ必要？ -->
-<div style="page-break-after: always"></div>
-## インテント（要求意図）を定義する
 
 ### CallBackに追加
 
@@ -75,8 +66,8 @@ package com.example.simple_assistant;
       var jsonf = "{\"sentence\" : \"%s\"}";
       var json = String.format(jsonf, text);
       var req = HttpRequest.newBuilder()
-              .uri(URI.create("http://172.25.2.52:8080/doc2vec-sample/"))
-//              .uri(URI.create("http://172.25.2.65:8000/doc2vec-sample/"))
+              .uri(URI.create("http://*.*.*.*:8080/doc2vec-sample/"))
+//              .uri(URI.create("http://*.*.*.*:8000/doc2vec-sample/"))
               .header("Content-Type", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(json))
               .build();
