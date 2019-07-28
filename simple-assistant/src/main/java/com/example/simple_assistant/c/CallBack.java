@@ -66,18 +66,18 @@ public class CallBack {
   }
 
   // doc2vecAPIにキーワードを渡して小説のタイトルをもらう
-  @EventMapping
-  public Message handleMessage(MessageEvent<TextMessageContent> event) {
-    var keyWord = new UserIntent(event);
-    return doc2vecAPI(keyWord);
-  }
-
-//   MessageEventに対応する/文章で話しかけられたとき（テキストメッセージのイベント）に対応するリマインダ版
 //  @EventMapping
 //  public Message handleMessage(MessageEvent<TextMessageContent> event) {
-//    var userIntent = new UserIntent(event);
-//    return handleIntent(userIntent);
+//    var keyWord = new UserIntent(event);
+//    return doc2vecAPI(keyWord);
 //  }
+
+//   MessageEventに対応する/文章で話しかけられたとき（テキストメッセージのイベント）に対応するリマインダ版
+  @EventMapping
+  public Message handleMessage(MessageEvent<TextMessageContent> event) {
+    var userIntent = new UserIntent(event);
+    return handleIntent(userIntent);
+  }
 
 //  // 文章で話しかけられたとき（テキストメッセージのイベント）に対応する(先々週)
 //  @EventMapping
@@ -105,6 +105,8 @@ public class CallBack {
       var json = String.format(jsonf, text);
       var req = HttpRequest.newBuilder()
               .uri(URI.create("http://localhost:3004/doc2vec-sample/"))
+//              .uri(URI.create("http://172.25.2.146:8080/doc2vec-sample/"))
+//              .uri(URI.create("http://172.25.2.148:8000/doc2vec-sample/"))
               .header("Content-Type", "application/json")
               .POST(HttpRequest.BodyPublishers.ofString(json))
               .build();
@@ -274,6 +276,12 @@ public class CallBack {
         upsertUserIntent(userIntent);
         msg = getRemainderConfirmMsg(userIntent.getText());
         break;
+      case BOOK:
+//        var text = userIntent.getText();
+//        msg = (Message) userIntent.getIntent().getGroups(text);
+//        msg = getUserIntent(userIntent.getText(), Intent.BOOK).map(this::handleIntent).orElse(msg);
+        msg = doc2vecAPI(userIntent);
+        break;
       case UNKNOWN:
       default:
         // 確認画面(REMINDER)の段階で想定外な通常呼び出し(UNKNOWN)があれば、再帰的に再確認する
@@ -319,6 +327,14 @@ public class CallBack {
       .filter(ui -> ui.contains(intent))
       .findFirst();
   }
+
+  //追加部分削除予定
+//  // userIntentsフィールドに、指定された条件のものがあれば取り出す
+//  Optional<UserIntent> getBookIntent(BookIntent bookIntent) {
+//    return userIntents.stream()
+//            .filter(ui -> ui.contains(bookIntent))
+//            .findFirst();
+//  }
 
   // userIntentsフィールドを、引数のものに置き換える
   void upsertUserIntent(UserIntent newOne) {

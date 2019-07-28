@@ -12,7 +12,8 @@ ChatbotからDoc2VecのAPIを呼び出すためにCallBackに以下を追加す�
 ```java
 package com.example.simple_assistant;
 
-// -------------中略以上変更なし-------------
+// handleMessage()をコメントアウトする
+// -------------中略以上変更ほぼなし-------------
 
 // PostBackEventに対応する
   @EventMapping

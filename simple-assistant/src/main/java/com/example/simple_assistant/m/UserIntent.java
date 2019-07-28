@@ -22,6 +22,7 @@ public class UserIntent {
     this.userId = event.getSource().getUserId();
     this.text = event.getMessage().getText();
     this.intent = Intent.makeIntent(text);
+
   }
 
   public UserIntent(PostbackEvent event) {
