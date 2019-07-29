@@ -68,6 +68,18 @@ private TextMessage doc2vecAPI(String text) {
 
 ```
 
+```java
+public enum Intent {
+
+// -----以下を追加変更-----
+  // メッセージの正規表現パターンに対応するやりとり状態の定義
+  REMINDER(Pattern.compile("(\\d{1,2})時(\\d{1,2})分に(.{1,32})")),
+  BOOK(Pattern.compile("(.{1,32})の本")),
+  UNKNOWN(Pattern.compile(".+"));
+
+// -----以下を変更なし-----
+```
+
 
 ### 参考資料
 
