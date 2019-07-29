@@ -101,6 +101,39 @@ public class CallBack {
   private TextMessage doc2vecAPI(UserIntent text) {
 
     try {
+//      UserIntent intent;
+//      var groups = text.getIntent().getGroups();
+
+      // groups のListに格納された時間・分・用件をフィールドに格納する
+//      var keyword = groups.get(0);
+      var jsonf = "{\"sentence\" : \"%s\"}";
+      var json = String.format(jsonf, text);
+      var req = HttpRequest.newBuilder()
+              .uri(URI.create("http://localhost:3004/doc2vec-sample/"))
+//              .uri(URI.create("http://172.25.2.146:8080/doc2vec-sample/"))
+//              .uri(URI.create("http://172.25.2.148:8000/doc2vec-sample/"))
+              .header("Content-Type", "application/json")
+              .POST(HttpRequest.BodyPublishers.ofString(json))
+              .build();
+
+      HttpResponse<String> resp = HttpClient.newBuilder()
+              .build()
+              .send(req, HttpResponse.BodyHandlers.ofString());
+
+      return new TextMessage(resp.body());
+    } catch (IOException | InterruptedException e) {
+      throw new RuntimeException(e.getMessage());
+    }
+  }
+
+  private TextMessage doc2vecAPI(String text) {
+
+    try {
+//      UserIntent intent;
+//      var groups = text.getIntent().getGroups();
+
+      // groups のListに格納された時間・分・用件をフィールドに格納する
+//      var keyword = groups.get(0);
       var jsonf = "{\"sentence\" : \"%s\"}";
       var json = String.format(jsonf, text);
       var req = HttpRequest.newBuilder()
@@ -277,10 +310,11 @@ public class CallBack {
         msg = getRemainderConfirmMsg(userIntent.getText());
         break;
       case BOOK:
-//        var text = userIntent.getText();
-//        msg = (Message) userIntent.getIntent().getGroups(text);
-//        msg = getUserIntent(userIntent.getText(), Intent.BOOK).map(this::handleIntent).orElse(msg);
-        msg = doc2vecAPI(userIntent);
+        String pushText;
+        var text = userIntent.getText();
+        var groups = userIntent.getIntent().getGroups(text);
+        pushText = groups.get(0);
+        msg = doc2vecAPI(pushText);
         break;
       case UNKNOWN:
       default:
