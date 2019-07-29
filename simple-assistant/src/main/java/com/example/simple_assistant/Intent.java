@@ -15,7 +15,9 @@ import java.util.stream.IntStream;
 public enum Intent {
 
   // メッセージの正規表現パターンに対応するやりとり状態の定義
-  REMINDER(Pattern.compile("^(\\d{1,2})時(\\d{1,2})分に(.{1,32})$")),
+//  REMINDER(Pattern.compile("^(\\d{1,2})時(\\d{1,2})分に(.{1,32})$")),
+  REMINDER(Pattern.compile("(\\d{1,2})時(\\d{1,2})分に(.{1,32})")),
+  BOOK(Pattern.compile("(.{1,32})の本")),
   UNKNOWN(Pattern.compile(".+"));
 
   private Pattern pattern;
